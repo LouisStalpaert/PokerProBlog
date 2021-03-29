@@ -100,7 +100,6 @@ class Model(object):
         self.n += 1
         sdd, shape = self.get_sdd(query, test)
         solution = solve(self, sdd, shape)
-        #print("solution: " + str(solution))
         self.clear()
         return solution
 
@@ -115,7 +114,6 @@ class Model(object):
             out1 = self.solve(q, None, test)
             out = max(out1, key=lambda x: out1[x][0])
             val = out1.get(out)[0]
-            #print(out1)
             prob = 0
             if ("loss" in str(out)):
                 prob = 1 - val
