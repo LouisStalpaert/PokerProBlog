@@ -11,6 +11,8 @@ from gradient_semiring import SemiringGradient
 
 class Model(object):
 
+    probs = []
+
     def __init__(self, model_string, networks, caching=False, saving=False):
         self.networks = dict()
         for network in networks:
@@ -98,23 +100,39 @@ class Model(object):
         self.n += 1
         sdd, shape = self.get_sdd(query, test)
         solution = solve(self, sdd, shape)
+        #print("solution: " + str(solution))
         self.clear()
         return solution
 
     def accuracy(self, data, nr_output=1, test=False, verbose=False):
         correct = 0
+        total = 0
+        i = 0
         for d in data:
             args = list(d.args)
             args[-nr_output:] = [Var('X_{}'.format(i)) for i in range(nr_output)]
             q = d(*args)
-            out = self.solve(q, None, test)
-            out = max(out, key=lambda x: out[x][0])
-            if out == d:
+            out1 = self.solve(q, None, test)
+            out = max(out1, key=lambda x: out1[x][0])
+            val = out1.get(out)[0]
+            #print(out1)
+            prob = 0
+            if ("loss" in str(out)):
+                prob = 1 - val
+            else:
+                prob = val
+            i += 1
+            total += prob
+            if (i%10 == 0):
+                self.probs.append(total/i)
+                print('Accuracy_probability', total / i)
+            if "win" in str(out):
                 correct += 1
             else:
                 if verbose:
                     print('Wrong', d, 'vs', out)
         print('Accuracy', correct / len(data))
+        print(self.probs)
         return [('Accuracy', correct / len(data))]
 
     def save_state(self, location):
